@@ -1,0 +1,170 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.jiang</groupId>
+	<artifactId>spring-cloud</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<modules>
+		<module>eureka-server</module>
+		<module>zipkin-server</module>
+		<module>provider</module>
+		<module>consumer</module>
+		<module>gateway-server</module>
+		<module>zipkin-server-elasticsearch</module>
+		<module>config-server</module>
+	</modules>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.5.10.RELEASE</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+
+	<properties>
+		<!-- 编码以及java相关 -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+		<!-- SpringBoot-Cloud相关 -->
+		<spring-cloud-main-class>com.silverbox.demo.DemoApplication</spring-cloud-main-class>
+		<spring-cloud.version>Dalston.SR5</spring-cloud.version>
+		<mybatis-spring-boot.version>1.3.2</mybatis-spring-boot.version>
+		<druid-spring-boot.version>1.1.9</druid-spring-boot.version>
+		<pagehelper-spring-boot.version>1.2.5</pagehelper-spring-boot.version>
+		<!-- 日志 -->
+		<logstash-gelf.version>1.11.2</logstash-gelf.version>
+		<!-- swagger -->
+		<springfox-swagger2.version>2.7.0</springfox-swagger2.version>
+		<!-- 各种第三方工具类 -->
+		<fastjson.version>1.2.47</fastjson.version>
+		<!-- docker相关 -->
+		<dockerfile-maven.version>1.4.0</dockerfile-maven.version>
+		<docker-clien.version>8.11.2</docker-clien.version>
+		<docker.image.prefix>172.16.8.6:8084/silverbox</docker.image.prefix>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>biz.paluch.logging</groupId>
+				<artifactId>logstash-gelf</artifactId>
+				<version>${logstash-gelf.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<targetPath>${project.build.directory}/classes</targetPath>
+				<filtering>false</filtering>
+				<includes>
+					<include>**/*.jks</include>
+				</includes>
+			</resource>
+			<!-- 把resource目录下所有文件和文件夹导入到jar包内 -->
+			<resource>
+				<directory>src/main/resources</directory>
+				<targetPath>${project.build.directory}/classes</targetPath>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/*.xml</include>
+					<include>**/*.properties</include>
+					<include>**/*.yml</include>
+				</includes>
+			</resource>
+		</resources>
+
+		<plugins>
+			<!-- 资源文件拷贝插件 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<configuration>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<configuration>
+					<warName>${project.artifactId}-${project.version}</warName>
+				</configuration>
+			</plugin>
+			<!-- 跳过测试代码 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<skipTests>true</skipTests>
+				</configuration>
+			</plugin>
+			<!-- maven打包成jar的插件 -->
+			<!-- 打包jar文件时，配置manifest文件，加入lib包的jar依赖 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<!-- 把target/classes/下的文件导入到jar内 -->
+					<classesDirectory>target/classes/</classesDirectory>
+					<finalName>${project.artifactId}-${project.version}</finalName>
+					<archive>
+						<manifest>
+							<!-- 指定程序入口 -->
+							<mainClass>${spring-cloud-main-class}</mainClass>
+							<!-- 打包时 MANIFEST.MF文件不记录的时间戳版本 -->
+							<useUniqueVersions>false</useUniqueVersions>
+							<addClasspath>true</addClasspath>
+							<!-- 服务依赖的jar包放在lib目录下 -->
+							<classpathPrefix>lib/</classpathPrefix>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<!-- <includeScope>compile</includeScope> -->
+							<type>jar</type>
+							<includeTypes>jar</includeTypes>
+							<useUniqueVersions>false</useUniqueVersions>
+							<!-- 存放服务依赖的jar包，存放在服务相同目录的lib文件夹下 -->
+							<outputDirectory>
+								${project.build.directory}/lib
+							</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

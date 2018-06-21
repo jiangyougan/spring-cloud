@@ -1,8 +1,8 @@
 server:
-  port: 8762
+  port: 8081
 spring:
   application:
-    name: consumer-server
+    name: gateway-server
 #  sleuth:
 #    enabled: false
 #    sampler:
@@ -22,3 +22,11 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+#zuul自定义路由策略      
+#zuul:
+#  routes:
+#    #访问路径包含/myproduct -> product应用
+#    product: /myproduct/**
+#  ignored-patterns:
+    
+    

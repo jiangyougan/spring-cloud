@@ -10,4 +10,7 @@ public class GatewayServer {
 	public static void main(String[] args) {
 		SpringApplication.run(GatewayServer.class, args);
 	}
+	
+	
+	//TODO 实现动态路由
 }
